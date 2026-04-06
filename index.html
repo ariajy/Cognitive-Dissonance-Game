@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cognitive Dissonance Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app" id="app" data-phase="registration">
+    <header>
+      <div>
+        <div class="game-title">Dissonant Choices</div>
+        <div class="badge">Interactive narrative • Mobile</div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnHelp" type="button" aria-label="Open help">
+          ?
+        </button>
+        <button class="icon-btn" id="btnSettings" type="button" aria-label="Open settings">
+          ⚙
+        </button>
+        <div class="badge">v1.0</div>
+      </div>
+    </header>
+
+    <section class="persona-panel" aria-label="Belief persona and strain">
+      <div class="persona-main">
+        <div class="persona-name" id="personaName">Add your name</div>
+        <div class="persona-traits" id="personaTraits"></div>
+      </div>
+      <div
+        class="strain-meter"
+        id="strainMeter"
+        role="group"
+        aria-label="Strain: Low, 0 percent"
+      >
+        <div class="strain-label">
+          <span>Strain</span>
+          <span id="strainLabel" class="strain-band">Low</span>
+        </div>
+        <div class="strain-bar">
+          <div class="strain-fill" id="strainFill"></div>
+        </div>
+        <div class="strain-meter__pct">
+          <span id="strainPercent" class="strain-percent--detail">0%</span>
+        </div>
+      </div>
+    </section>
+
+    <main class="card" aria-live="polite">
+      <div class="screen screen--active" id="screen-registration">
+        <div class="card-header">Registration</div>
+        <div class="card-title">Student check-in</div>
+        <div class="card-body onboarding-intro">
+          Please register once before playing. This helps us connect reflection data to your class cohort.
+        </div>
+        <div class="onboarding-step">
+          <span class="onboarding-step-badge" aria-hidden="true">1</span>
+          <div class="onboarding-step-body">
+            <div class="onboarding-step-title">Enter your student information</div>
+            <p class="onboarding-step-hint">Required for class participation tracking.</p>
+          </div>
+        </div>
+        <input class="onboarding-input" id="regFullName" type="text" maxlength="80" placeholder="Full name" aria-label="Full name" />
+        <input class="onboarding-input" id="regStudentId" type="text" maxlength="40" placeholder="Student ID" aria-label="Student ID" />
+        <input class="onboarding-input" id="regEmail" type="email" maxlength="120" placeholder="School email" aria-label="School email" />
+        <label class="belief-pick-item">
+          <input id="regConsent" type="checkbox" />
+          <span class="belief-pick-text">I agree to submit this registration information for course use.</span>
+        </label>
+        <p class="onboarding-error" id="registrationError" hidden></p>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnRegistrationSubmit" type="button" disabled aria-disabled="true">
+            <span class="btn-label">
+              <span class="btn-title">Submit registration</span>
+              <span class="subtitle" id="registrationSubmitSubtitle">Complete required fields.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-onboarding">
+        <div class="card-header">Before you begin</div>
+        <div class="card-title">Who are you today?</div>
+        <p class="onboarding-appear-as" id="onboardingAppearAs" aria-live="polite">
+          <span class="onboarding-appear-as__label">You'll appear as:</span>
+          <span class="onboarding-appear-as__name" id="onboardingAppearAsName">Add your name</span>
+        </p>
+        <div class="card-body onboarding-intro">
+          Two quick steps: your name, then <strong>exactly three</strong> beliefs you care about most. All beliefs still affect the game—this only marks your focus for the header.
+        </div>
+        <div class="onboarding-step">
+          <span class="onboarding-step-badge" aria-hidden="true">1</span>
+          <div class="onboarding-step-body">
+            <div class="onboarding-step-title">Your name</div>
+            <p class="onboarding-step-hint">Shown in the bar above as you type.</p>
+          </div>
+        </div>
+        <input
+          class="onboarding-input"
+          id="playerNameInput"
+          type="text"
+          maxlength="40"
+          autocomplete="name"
+          placeholder="e.g. Jordan"
+          aria-label="Your name"
+        />
+        <div class="onboarding-step onboarding-step--beliefs">
+          <span class="onboarding-step-badge" aria-hidden="true">2</span>
+          <div class="onboarding-step-body">
+            <div class="onboarding-step-title">Step 2: Scroll and check exactly 3 beliefs.</div>
+            <p class="onboarding-step-hint">
+              The line below shows <strong>Selected: X/3</strong>. <strong>Continue</strong> unlocks at 3/3 plus your name.
+            </p>
+          </div>
+        </div>
+        <p class="onboarding-belief-count" id="beliefPickHint" role="status" aria-live="polite">
+          Selected: 0/3 · Continue unlocks at 3/3.
+        </p>
+        <div class="belief-pick-list" id="beliefPickList" role="group" aria-label="Pick exactly three beliefs by checkbox"></div>
+        <div
+          class="belief-pick-scroll-hint"
+          id="beliefPickScrollHint"
+          aria-live="polite"
+          hidden
+        >
+          Scroll for more beliefs <span aria-hidden="true">↓</span>
+        </div>
+        <p class="onboarding-error" id="onboardingError" hidden></p>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnOnboardingContinue" type="button" disabled aria-disabled="true">
+            <span class="btn-label">
+              <span class="btn-title">Continue</span>
+              <span class="subtitle" id="onboardingContinueSubtitle">Unlocks with name + 3 picks.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-start">
+        <div class="card-header">Episode 1</div>
+        <div class="card-title" id="startTitle">Help choose.</div>
+        <p class="start-name-line" id="startNameLine" hidden aria-live="polite"></p>
+        <div class="card-body" id="startBody">
+          Short scenes. One choice each.
+        </div>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnStart">
+            <span class="btn-label">
+              <span class="btn-title">Start</span>
+              <span class="subtitle">Tap to begin.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-scenario">
+        <div class="card-header" id="scenarioEpisodeLabel">Scenario</div>
+        <div class="card-title" id="scenarioTitle"></div>
+        <div class="belief-line" id="scenarioBeliefLine" hidden></div>
+        <div class="card-body" id="scenarioText"></div>
+        <div class="card-body" id="scenarioInnerVoices"></div>
+        <div class="soft-highlight" id="scenarioDecisionMoment"></div>
+        <div class="tag-row">
+          <div class="tag tag--focus" id="scenarioFocusTag"></div>
+          <div class="tag" id="scenarioStakesTag"></div>
+        </div>
+        <div class="hint">Read, then continue.</div>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnToDecision">
+            <span class="btn-label">
+              <span class="btn-title">Choose</span>
+              <span class="subtitle">Go to options.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-decision">
+        <div class="card-header">Decision</div>
+        <div class="card-title" id="decisionTitle"></div>
+        <div class="card-body" id="decisionPrompt"></div>
+        <div class="choices" id="decisionOptions" aria-label="Primary choices"></div>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnCommitDecision">
+            <span class="btn-label">
+              <span class="btn-title">Continue</span>
+              <span class="subtitle">See the strain.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-dissonance">
+        <div class="card-header">Strain</div>
+        <div class="card-title" id="dissonanceTitle"></div>
+        <div class="card-body" id="dissonanceBody"></div>
+        <div class="soft-highlight" id="dissonanceInsight"></div>
+        <div class="tension-visual tension--calm" id="dissonanceTensionVisual" aria-hidden="true">
+          <div class="tension-visual-label">
+            <span class="tension-icon" id="dissonanceTensionIcon" aria-hidden="true">○</span>
+            <span class="tension-level-text" id="dissonanceTensionLevelLabel">Calm</span>
+          </div>
+          <div class="tension-bar tension-bar--large" role="presentation">
+            <div class="tension-fill" id="dissonanceTensionFill"></div>
+          </div>
+          <p class="tension-visual-hint" id="dissonanceTensionHint">Inner pull from this moment.</p>
+        </div>
+        <div class="metric-row metric-row--secondary">
+          <span>Tension change (this choice)</span>
+          <span class="metric-value" id="decisionStrainDeltaLabel"></span>
+        </div>
+        <p class="dissonance-conflict-note" id="dissonanceConflictNote" hidden></p>
+        <div class="metric-row metric-row--secondary">
+          <span>Belief hit</span>
+          <span class="metric-value" id="keyTraitTensionLabel"></span>
+        </div>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnToReduction">
+            <span class="btn-label">
+                <span class="btn-title">Reduce strain</span>
+                <span class="subtitle" id="reductionScreenSubtitle">Pick how you cope.</span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-reduction">
+        <div class="card-header">Coping</div>
+        <div class="card-title">How do you make sense of what you just did?</div>
+        <div class="card-body">Pick the thought that feels most true.</div>
+        <div class="buttons" id="reductionButtons"></div>
+      </div>
+
+      <div class="screen" id="screen-summary">
+        <div class="card-header">Result</div>
+        <div class="card-title">What changed?</div>
+        <div class="belief-delta-viz belief-change-viz" id="beliefDeltaViz" hidden></div>
+        <div class="summary-compact summary-visual-board" id="summaryCompact" aria-label="Episode summary"></div>
+        <details class="summary-extra" id="summaryExtra" hidden>
+          <summary class="summary-extra__summary">Reflection &amp; notes</summary>
+          <div class="summary-extra__body" id="summaryExtraBody"></div>
+        </details>
+        <div class="summary-foot-strain" id="summaryFootStrain">
+          <div class="summary-foot-strain__row">
+            <span class="summary-foot-strain__label">Strain now</span>
+            <span class="summary-foot-strain__value">
+              <span id="summaryStrainBand" class="summary-strain-band">Low</span>
+              <span id="summaryStrainPct" class="summary-strain-pct">0%</span>
+            </span>
+          </div>
+          <div class="summary-foot-strain__track" role="presentation">
+            <div class="summary-foot-strain__fill" id="summaryStrainFill"></div>
+          </div>
+        </div>
+        <div class="buttons">
+          <button class="btn btn-primary" id="btnNextScenario">
+            <span class="btn-label">
+              <span class="btn-title" id="nextScenarioLabel">Next scene</span>
+              <span class="subtitle" id="nextScenarioSubtitle"></span>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="btn btn-outline" id="btnRestart" style="display:none;">
+            <span class="btn-label">
+              <span class="btn-title">Restart</span>
+              <span class="subtitle">Play from the start.</span>
+            </span>
+          </button>
+        </div>
+        <div class="tension-ripple-host" id="tensionRippleHost" aria-hidden="true">
+          <div class="tension-ripple" id="tensionRipple"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bottom-bar">
+      <div class="progress-dots" id="progressDots"></div>
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusLabel">Calm</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel" hidden>
+    <div class="settings-card" role="dialog" aria-modal="false" aria-label="Settings">
+      <div class="settings-title">Settings</div>
+      <div class="settings-actions">
+        <button class="btn btn-outline" id="btnReplayTutorial" type="button">
+          <span class="btn-label">
+            <span class="btn-title">Replay tutorial</span>
+            <span class="subtitle">Show guidance again.</span>
+          </span>
+        </button>
+        <button class="btn btn-outline" id="btnRestartFromSettings" type="button">
+          <span class="btn-label">
+            <span class="btn-title">Restart game</span>
+            <span class="subtitle">Clear saved progress and reload from the beginning.</span>
+          </span>
+        </button>
+        <button class="btn btn-primary" id="btnCloseSettings" type="button">
+          <span class="btn-label">
+            <span class="btn-title">Close</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-panel" id="helpPanel" hidden>
+    <div class="help-card" role="dialog" aria-modal="false" aria-label="Help">
+      <div class="help-header">
+        <div class="help-title">Help</div>
+        <button class="icon-btn" id="btnCloseHelp" type="button" aria-label="Close help">
+          ×
+        </button>
+      </div>
+      <div class="help-content" id="helpContent">
+        <section class="help-section">
+          <h3>What this game is</h3>
+          <p>
+            Dissonant Choices is a short narrative simulation about cognitive dissonance.
+            Each scene asks you to choose an action, then reflect on how that action fits your beliefs.
+          </p>
+        </section>
+        <section class="help-section">
+          <h3>How to play</h3>
+          <p>
+            Start a scene, pick one option, and continue through strain, coping, and summary screens.
+            Your current strain level and highlighted beliefs update as your decisions accumulate.
+          </p>
+        </section>
+        <section class="help-section">
+          <h3>How to read feedback</h3>
+          <p>
+            <strong>Strain</strong> is shown as <strong>Low</strong>, <strong>Medium</strong>, or <strong>High</strong>
+            (based on your current tension). A smaller percentage next to it is a fine-grained read—the level name is
+            what to notice first.
+          </p>
+          <p>
+            Belief visuals show direction and size of change. Up/down indicators and values are provided together so
+            you can compare outcomes without relying on color.
+          </p>
+        </section>
+        <section class="help-section">
+          <h3>Tutorial and settings</h3>
+          <p>
+            You can replay the tutorial from Settings at any time. Restart clears the current save state and
+            starts a fresh run.
+          </p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="tutorial-layer" id="tutorialLayer" hidden aria-live="polite">
+    <div class="tutorial-highlight" id="tutorialHighlight"></div>
+    <div class="tutorial-card" id="tutorialCard">
+      <div class="tutorial-step" id="tutorialStepLabel">Step 1/1</div>
+      <div class="tutorial-text" id="tutorialText"></div>
+      <div class="tutorial-controls">
+        <button class="tutorial-btn" id="btnTutorialBack" type="button">Back</button>
+        <button class="tutorial-btn tutorial-btn--primary" id="btnTutorialNext" type="button">
+          Next
+        </button>
+        <button class="tutorial-btn tutorial-btn--ghost" id="btnTutorialSkip" type="button">
+          Skip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="./core/beliefSystem.js"></script>
+  <script defer src="./core/strainSystem.js"></script>
+  <script defer src="./core/dissonanceEngine.js"></script>
+  <script defer src="./content/scenarios.js"></script>
+  <script defer src="./game/persistence.js"></script>
+  <script defer src="./game/gameLoop.js"></script>
+  <script defer src="./ui/tutorialEngine.js"></script>
+  <script defer src="./ui/gameUI.js"></script>
+  <script defer>
+    // Bootstrap after DOM is ready and scripts are loaded.
+    window.addEventListener("DOMContentLoaded", () => {
+      const personaState = window.createDefaultPersona();
+      // Always start at Scenario 1 (index 0). Do not resume mid-progress from save.
+      if (window.GamePersistence && window.GamePersistence.load) {
+        const saved = window.GamePersistence.load();
+        if (saved) {
+          window.GamePersistence.applyToPersona(personaState, saved);
+        }
+      }
+      const beliefSystem = new window.BeliefSystem(personaState);
+      beliefSystem.rebuildStabilityIndex();
+      const strainSystem = new window.StrainSystem(personaState);
+      const dissonanceEngine = new window.DissonanceEngine();
+      const gameLoop = new window.GameLoop({
+        persona: personaState,
+        beliefSystem,
+        strainSystem,
+        dissonanceEngine,
+        initialScenarioIndex: 0
+      });
+
+      const ui = new window.GameUI(gameLoop, {
+        personaState,
+        beliefSystem,
+        strainSystem
+      });
+
+      ui.init();
+    });
+  </script>
+</body>
+</html>
+

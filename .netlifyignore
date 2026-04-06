@@ -1,0 +1,6 @@
+# Keep deploy uploads small; static site still serves game assets from repo root.
+.tmp-qa
+**/node_modules
+.git
+.cursor
+*.log
