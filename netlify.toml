@@ -1,5 +1,6 @@
-# Build: static files from repo root; serverless functions in netlify/functions
+# Static site: no real build. Do not list netlify-cli in package.json — its install breaks CI.
 [build]
+  command = "npm run build"
   publish = "."
   functions = "netlify/functions"
 

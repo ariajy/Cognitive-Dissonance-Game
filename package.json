@@ -3,10 +3,8 @@
   "private": true,
   "description": "Static game + Netlify function for registration webhook",
   "scripts": {
-    "deploy": "netlify deploy --prod",
-    "deploy:draft": "netlify deploy"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.0.0"
+    "build": "echo Static site - no bundler",
+    "deploy": "npx netlify-cli deploy --prod",
+    "deploy:draft": "npx netlify-cli deploy"
   }
 }
