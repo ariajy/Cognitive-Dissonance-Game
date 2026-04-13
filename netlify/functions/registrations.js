@@ -1,5 +1,14 @@
 // Netlify Function: POST /api/registrations
-// Stores nothing locally; forwards validated payload to a configured webhook.
+// Validates input and inserts one document into MongoDB (e.g. MongoDB Atlas).
+//
+// Netlify environment variables:
+//   MONGODB_URI          — required, Atlas connection string (use env var, never commit)
+//   MONGODB_DB           — optional, default "learnFromDissonance"
+//   MONGODB_COLLECTION   — optional, default "registrations"
+//
+// Atlas: Network Access → allow 0.0.0.0/0 (or Netlify’s egress) so serverless can connect.
+
+const { MongoClient } = require("mongodb");
 
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
@@ -14,55 +23,66 @@ exports.handler = async function (event) {
   }
 
   var fullName = readTrimmed(data.fullName, 80);
-  var studentId = readTrimmed(data.studentId, 40);
   var email = readTrimmed(data.email, 120).toLowerCase();
   var consent = !!data.consent;
 
   if (!fullName) return json(400, { error: "fullName is required." });
-  if (!studentId) return json(400, { error: "studentId is required." });
   if (!isEmail(email)) return json(400, { error: "Valid email is required." });
   if (!consent) return json(400, { error: "Consent is required." });
 
-  var payload = {
-    fullName: fullName,
-    studentId: studentId,
-    email: email,
-    consent: true,
-    source: "dissonant-choices",
-    submittedAt: new Date().toISOString()
-  };
-
-  var webhook = process.env.REGISTRATION_WEBHOOK_URL;
-  if (!webhook) {
+  var uri = process.env.MONGODB_URI;
+  if (!uri || typeof uri !== "string" || !uri.trim()) {
     return json(503, {
       error:
-        "Registration backend is not configured. Set REGISTRATION_WEBHOOK_URL in Netlify environment variables."
+        "Database not configured. Set MONGODB_URI in Netlify environment variables."
     });
   }
 
+  var dbName = readEnvDefault(process.env.MONGODB_DB, "learnFromDissonance");
+  var collName = readEnvDefault(process.env.MONGODB_COLLECTION, "registrations");
+
+  var doc = {
+    fullName: fullName,
+    email: email,
+    consent: true,
+    source: "learn-from-dissonance",
+    submittedAt: new Date().toISOString(),
+    createdAt: new Date()
+  };
+
+  var client;
   try {
-    var upstream = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!upstream.ok) {
-      return json(502, {
-        error: "Registration upstream rejected the request."
-      });
-    }
-  } catch (e) {
-    return json(502, {
-      error: "Could not reach registration upstream."
-    });
-  }
+    client = new MongoClient(uri.trim());
+    await client.connect();
+    var coll = client.db(dbName).collection(collName);
+    var result = await coll.insertOne(doc);
+    var registrationId =
+      result && result.insertedId ? String(result.insertedId) : buildRegistrationId(email);
 
-  return json(201, {
-    ok: true,
-    registrationId: buildRegistrationId(studentId),
-    message: "Registration submitted."
-  });
+    return json(201, {
+      ok: true,
+      registrationId: registrationId,
+      message: "Registration submitted."
+    });
+  } catch (e) {
+    var msg =
+      process.env.NODE_ENV === "development" && e && e.message
+        ? e.message
+        : "Could not save registration.";
+    return json(502, { error: msg });
+  } finally {
+    if (client) {
+      try {
+        await client.close();
+      } catch (_) {}
+    }
+  }
 };
+
+function readEnvDefault(v, fallback) {
+  if (typeof v === "string" && v.trim()) return v.trim();
+  return fallback;
+}
 
 function readTrimmed(v, maxLen) {
   if (typeof v !== "string") return "";
@@ -73,8 +93,9 @@ function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
-function buildRegistrationId(studentId) {
-  var safe = (studentId || "student").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 18) || "student";
+function buildRegistrationId(email) {
+  var local = typeof email === "string" && email.indexOf("@") > 0 ? email.split("@")[0] : "";
+  var safe = (local || "user").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 18) || "user";
   return "reg_" + safe + "_" + Date.now().toString(36);
 }
 
@@ -88,4 +109,3 @@ function json(code, obj) {
     body: JSON.stringify(obj || {})
   };
 }
-

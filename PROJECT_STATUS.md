@@ -130,7 +130,8 @@ Open `index.html` in a browser (desktop or mobile), or serve the folder with any
 - **`docs/summary-visual-first.md`** — Summary screen: visual-first layout, explicit vs implied, text budgets per state.  
 - **`docs/belief-change-feedback.md`** — When to show belief Δ feedback, direction/tone (no moral color), max highlights, edge cases.  
 - **`docs/tutorial-design.md`** — Tutorial IA (4 steps), skip/don't-show-again logic, trigger rules (first-time / replay / settings), success metric, persistence schema.  
-- **`docs/help-question-mark-ia.md`** — 「?」帮助信息架构：教程/问号分工、分屏上下文帮助方案、全部条目大纲（概念+每屏）、P0/P1/P2 优先级、验收标准。
+- **`docs/help-question-mark-ia.md`** — 「?」帮助信息架构：教程/问号分工、分屏上下文帮助方案、全部条目大纲（概念+每屏）、P0/P1/P2 优先级、验收标准。  
+- **`docs/inner-voice-agent-system.md`** — 内心声音多 Agent 辩论系统设计文稿：4 个人格 Agent 定义、音量权重算法、LLM prompt 规格、辩论模式、跨场景记忆、fallback 策略、与现有引擎接口映射。
 
 ---
 

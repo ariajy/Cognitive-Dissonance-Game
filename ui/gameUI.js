@@ -124,7 +124,6 @@ class GameUI {
     this.reductionScreenSubtitleEl = document.getElementById("reductionScreenSubtitle");
 
     this.regFullNameEl = document.getElementById("regFullName");
-    this.regStudentIdEl = document.getElementById("regStudentId");
     this.regEmailEl = document.getElementById("regEmail");
     this.regConsentEl = document.getElementById("regConsent");
     this.registrationErrorEl = document.getElementById("registrationError");
@@ -326,7 +325,7 @@ class GameUI {
 
   wireRegistration() {
     const sync = () => this.updateRegistrationSubmitEnabled();
-    [this.regFullNameEl, this.regStudentIdEl, this.regEmailEl, this.regConsentEl].forEach(
+    [this.regFullNameEl, this.regEmailEl, this.regConsentEl].forEach(
       (el) => {
         if (!el) return;
         el.addEventListener("input", sync);
@@ -347,16 +346,12 @@ class GameUI {
       this.regFullNameEl && typeof this.regFullNameEl.value === "string"
         ? this.regFullNameEl.value.trim()
         : "";
-    const studentId =
-      this.regStudentIdEl && typeof this.regStudentIdEl.value === "string"
-        ? this.regStudentIdEl.value.trim()
-        : "";
     const email =
       this.regEmailEl && typeof this.regEmailEl.value === "string"
         ? this.regEmailEl.value.trim()
         : "";
     const consent = !!(this.regConsentEl && this.regConsentEl.checked);
-    const ok = !!fullName && !!studentId && isLikelyEmail(email) && consent;
+    const ok = !!fullName && isLikelyEmail(email) && consent;
     this.btnRegistrationSubmit.disabled = !ok;
     this.btnRegistrationSubmit.setAttribute("aria-disabled", ok ? "false" : "true");
     if (this.registrationSubmitSubtitleEl) {
@@ -379,17 +374,13 @@ class GameUI {
         this.regFullNameEl && typeof this.regFullNameEl.value === "string"
           ? this.regFullNameEl.value.trim().slice(0, 80)
           : "",
-      studentId:
-        this.regStudentIdEl && typeof this.regStudentIdEl.value === "string"
-          ? this.regStudentIdEl.value.trim().slice(0, 40)
-          : "",
       email:
         this.regEmailEl && typeof this.regEmailEl.value === "string"
           ? this.regEmailEl.value.trim().slice(0, 120)
           : "",
       consent: !!(this.regConsentEl && this.regConsentEl.checked)
     };
-    if (!payload.fullName || !payload.studentId || !isLikelyEmail(payload.email) || !payload.consent) {
+    if (!payload.fullName || !isLikelyEmail(payload.email) || !payload.consent) {
       this.showRegistrationError("Please complete all required fields.");
       this.updateRegistrationSubmitEnabled();
       return;
