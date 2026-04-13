@@ -65,11 +65,12 @@ exports.handler = async function (event) {
       message: "Registration submitted."
     });
   } catch (e) {
-    var msg =
-      process.env.NODE_ENV === "development" && e && e.message
-        ? e.message
-        : "Could not save registration.";
-    return json(502, { error: msg });
+    // Return a short hint for UI; full stack is in Netlify function logs.
+    var hint = "Could not save registration.";
+    if (e && e.message && /ECONNREFUSED|ENOTFOUND|SSL|authentication failed|bad auth/i.test(e.message)) {
+      hint = "Database connection failed. Check MONGODB_URI and Atlas Network Access (0.0.0.0/0).";
+    }
+    return json(502, { error: hint });
   } finally {
     if (client) {
       try {

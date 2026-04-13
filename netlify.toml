@@ -4,6 +4,10 @@
   publish = "."
   functions = "netlify/functions"
 
+# Trace node_modules for Functions so `mongodb` is included correctly (esbuild can break drivers).
+[functions]
+  node_bundler = "nft"
+
 # POST /api/registrations → registrations.js (see netlify/functions/registrations.js)
 [[redirects]]
   from = "/api/*"

@@ -1928,16 +1928,21 @@ async function postRegistrationPayload(payload) {
     }
     throw networkError;
   }
+  const text = await res.text();
   let body = null;
   try {
-    body = await res.json();
+    body = text ? JSON.parse(text) : null;
   } catch (_) {
     body = null;
   }
   if (!res.ok) {
-    const msg =
+    const detail =
       (body && (body.error || body.message)) ||
-      "Registration service unavailable.";
+      (text && String(text).trim().slice(0, 400)) ||
+      "";
+    const msg = detail
+      ? detail
+      : "Registration failed (HTTP " + res.status + ").";
     throw new Error(msg);
   }
   return body || {};
