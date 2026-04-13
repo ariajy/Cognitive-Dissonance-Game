@@ -37,6 +37,15 @@ exports.handler = async function (event) {
         "Database not configured. Set MONGODB_URI in Netlify environment variables."
     });
   }
+  uri = uri.trim();
+  if (/<password>/i.test(uri) || /%3Cpassword%3E/i.test(uri)) {
+    return json(503, {
+      error:
+        "MONGODB_URI still contains the placeholder <password>. Replace it with your Atlas database user password.",
+      hint:
+        "If the password contains @ : / # ? use URL-encoding (e.g. @ → %40). Copy the string from Atlas → Connect → Drivers."
+    });
+  }
 
   var dbName = readEnvDefault(process.env.MONGODB_DB, "learnFromDissonance");
   var collName = readEnvDefault(process.env.MONGODB_COLLECTION, "registrations");
@@ -52,7 +61,7 @@ exports.handler = async function (event) {
 
   var client;
   try {
-    client = new MongoClient(uri.trim());
+    client = new MongoClient(uri, { serverSelectionTimeoutMS: 12000 });
     await client.connect();
     var coll = client.db(dbName).collection(collName);
     var result = await coll.insertOne(doc);
@@ -65,12 +74,24 @@ exports.handler = async function (event) {
       message: "Registration submitted."
     });
   } catch (e) {
-    // Return a short hint for UI; full stack is in Netlify function logs.
-    var hint = "Could not save registration.";
-    if (e && e.message && /ECONNREFUSED|ENOTFOUND|SSL|authentication failed|bad auth/i.test(e.message)) {
-      hint = "Database connection failed. Check MONGODB_URI and Atlas Network Access (0.0.0.0/0).";
+    var code = e && e.code ? String(e.code) : "";
+    var em = e && e.message ? String(e.message) : "";
+    console.error("[registrations] MongoDB error", { code: code, message: em });
+
+    var errMsg = "Could not save registration.";
+    var extraHint = "";
+
+    if (/authentication failed|bad auth|invalid.*password|SCRAM/i.test(em)) {
+      errMsg = "MongoDB rejected the username or password.";
+      extraHint =
+        "In Netlify, edit MONGODB_URI: use the Database User from Atlas (Database Access), URL-encode special characters in the password, and do not leave <password> in the string.";
+    } else if (/ENOTFOUND|getaddrinfo|ECONNREFUSED|querySrv|SSL|TLS|timed out|Server selection timed out/i.test(em)) {
+      errMsg = "Cannot reach MongoDB (network or URI hostname wrong).";
+      extraHint =
+        "Atlas → Network Access must include 0.0.0.0/0. Confirm the cluster hostname in MONGODB_URI matches Atlas → Connect → Drivers.";
     }
-    return json(502, { error: hint });
+
+    return json(502, { error: errMsg, hint: extraHint || undefined });
   } finally {
     if (client) {
       try {

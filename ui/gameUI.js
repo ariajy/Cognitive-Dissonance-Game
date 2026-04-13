@@ -1940,9 +1940,11 @@ async function postRegistrationPayload(payload) {
       (body && (body.error || body.message)) ||
       (text && String(text).trim().slice(0, 400)) ||
       "";
-    const msg = detail
+    const hint = body && body.hint ? String(body.hint).trim() : "";
+    let msg = detail
       ? detail
       : "Registration failed (HTTP " + res.status + ").";
+    if (hint) msg = msg + " — " + hint;
     throw new Error(msg);
   }
   return body || {};
