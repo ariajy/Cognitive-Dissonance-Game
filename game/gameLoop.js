@@ -370,6 +370,29 @@ class GameLoop {
           : 0) + 1;
     }
 
+    var ih = this.persona.innerVoiceHistory;
+    if (!ih || typeof ih !== "object") {
+      this.persona.innerVoiceHistory = ih = {
+        consecutiveJustifications: 0,
+        beliefChanges: 0,
+        behaviorChanges: 0,
+        lastSceneVoiceWeights: { honesty: 1, security: 1, social: 1, attachment: 1 }
+      };
+    }
+    var rt = rationalization.reductionType;
+    if (rt === "justification") {
+      ih.consecutiveJustifications =
+        (typeof ih.consecutiveJustifications === "number" ? ih.consecutiveJustifications : 0) + 1;
+    } else {
+      ih.consecutiveJustifications = 0;
+    }
+    if (rt === "belief_change") {
+      ih.beliefChanges = (typeof ih.beliefChanges === "number" ? ih.beliefChanges : 0) + 1;
+    }
+    if (rt === "behavior_change") {
+      ih.behaviorChanges = (typeof ih.behaviorChanges === "number" ? ih.behaviorChanges : 0) + 1;
+    }
+
     var episode = this.computeEpisodeDeltas();
 
     const effect = {
@@ -397,7 +420,34 @@ class GameLoop {
     return this.selectedRationalization.reductionType || null;
   }
 
+  /** Persist last inner-voice weight snapshot after LLM/static generation (see inner-voice-agent-system.md §5). */
+  recordInnerVoiceWeights(weights) {
+    var ih = this.persona.innerVoiceHistory;
+    if (!ih || typeof ih !== "object") return;
+    if (!ih.lastSceneVoiceWeights) {
+      ih.lastSceneVoiceWeights = { honesty: 1, security: 1, social: 1, attachment: 1 };
+    }
+    var w = weights || {};
+    if (typeof w.honesty === "number") ih.lastSceneVoiceWeights.honesty = w.honesty;
+    if (typeof w.security === "number") ih.lastSceneVoiceWeights.security = w.security;
+    if (typeof w.social === "number") ih.lastSceneVoiceWeights.social = w.social;
+    if (typeof w.attachment === "number") ih.lastSceneVoiceWeights.attachment = w.attachment;
+    this.persistState();
+  }
+
   goToNextDecision() {
+    if (!this.persona.voiceContextCarryover || typeof this.persona.voiceContextCarryover !== "object") {
+      this.persona.voiceContextCarryover = { primaryLabel: "", reductionType: null };
+    }
+    this.persona.voiceContextCarryover.primaryLabel =
+      this.lastPrimaryChoice && this.lastPrimaryChoice.label
+        ? String(this.lastPrimaryChoice.label).slice(0, 120)
+        : "";
+    this.persona.voiceContextCarryover.reductionType =
+      this.selectedRationalization && this.selectedRationalization.reductionType
+        ? this.selectedRationalization.reductionType
+        : null;
+
     if (this.currentIndex < decisionMoments.length - 1) {
       this.currentIndex += 1;
       this.currentDecision = decisionMoments[this.currentIndex];

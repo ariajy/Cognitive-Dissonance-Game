@@ -15,9 +15,11 @@
         };
       });
     }
+    var ivh = persona && persona.innerVoiceHistory ? persona.innerVoiceHistory : {};
+    var w = ivh.lastSceneVoiceWeights || {};
     // `playerName` in JSON is always the persisted form of `persona.name` (same trim/slice rules).
     return {
-      v: 3,
+      v: 4,
       justificationUses:
         persona && typeof persona.justificationUses === "number"
           ? persona.justificationUses
@@ -33,7 +35,19 @@
       registrationRef:
         persona && typeof persona.registrationRef === "string"
           ? persona.registrationRef.slice(0, 120)
-          : ""
+          : "",
+      innerVoiceHistory: {
+        consecutiveJustifications:
+          typeof ivh.consecutiveJustifications === "number" ? ivh.consecutiveJustifications : 0,
+        beliefChanges: typeof ivh.beliefChanges === "number" ? ivh.beliefChanges : 0,
+        behaviorChanges: typeof ivh.behaviorChanges === "number" ? ivh.behaviorChanges : 0,
+        lastSceneVoiceWeights: {
+          honesty: typeof w.honesty === "number" ? w.honesty : 1,
+          security: typeof w.security === "number" ? w.security : 1,
+          social: typeof w.social === "number" ? w.social : 1,
+          attachment: typeof w.attachment === "number" ? w.attachment : 1
+        }
+      }
     };
   }
 
@@ -84,6 +98,35 @@
     }
     if (typeof data.registrationRef === "string" && data.registrationRef.trim()) {
       persona.registrationRef = data.registrationRef.trim().slice(0, 120);
+    }
+    if (!persona.innerVoiceHistory || typeof persona.innerVoiceHistory !== "object") {
+      persona.innerVoiceHistory = {
+        consecutiveJustifications: 0,
+        beliefChanges: 0,
+        behaviorChanges: 0,
+        lastSceneVoiceWeights: { honesty: 1, security: 1, social: 1, attachment: 1 }
+      };
+    }
+    if (data.innerVoiceHistory && typeof data.innerVoiceHistory === "object") {
+      var ih = data.innerVoiceHistory;
+      if (typeof ih.consecutiveJustifications === "number") {
+        persona.innerVoiceHistory.consecutiveJustifications = ih.consecutiveJustifications;
+      }
+      if (typeof ih.beliefChanges === "number") {
+        persona.innerVoiceHistory.beliefChanges = ih.beliefChanges;
+      }
+      if (typeof ih.behaviorChanges === "number") {
+        persona.innerVoiceHistory.behaviorChanges = ih.behaviorChanges;
+      }
+      if (ih.lastSceneVoiceWeights && typeof ih.lastSceneVoiceWeights === "object") {
+        var lw = ih.lastSceneVoiceWeights;
+        if (typeof lw.honesty === "number") persona.innerVoiceHistory.lastSceneVoiceWeights.honesty = lw.honesty;
+        if (typeof lw.security === "number") persona.innerVoiceHistory.lastSceneVoiceWeights.security = lw.security;
+        if (typeof lw.social === "number") persona.innerVoiceHistory.lastSceneVoiceWeights.social = lw.social;
+        if (typeof lw.attachment === "number") {
+          persona.innerVoiceHistory.lastSceneVoiceWeights.attachment = lw.attachment;
+        }
+      }
     }
   }
 

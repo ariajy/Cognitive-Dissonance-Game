@@ -1713,6 +1713,19 @@ header {
   border-left: 3px solid rgba(255, 255, 255, 0.12);
 }
 
+.inner-voice-tag {
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-right: 2px;
+}
+
+.inner-voice-text {
+  font-weight: 400;
+}
+
 .summary-section-label {
   list-style: none;
   font-size: 11px;

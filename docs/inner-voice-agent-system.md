@@ -56,7 +56,7 @@
 |------|----|
 | **身份** | 记住好的、为关系辩护、感情优先于逻辑 |
 | **目标函数** | 保护情感联结，把「危险信号」重新诠释为爱 |
-| **驱动信号** | 场景含亲密关系标签 + 玩家历史 belief_change 次数 |
+| **驱动信号** | 场景 `contextTags` 含 **`intimate-relationship`** 时 fully active；否则权重见 §2b `sceneAttachmentFactor`。历史 `belief_change` 次数仍进入 `historyModifier`。 |
 | **被压制信号** | 玩家多次选 `behavior_change` → 声音变小，或变成「我知道你爱他，但……」|
 | **典型语气变化** | 强：直接为对方辩护 / 弱：语气迟疑，开始转向支持玩家 |
 
@@ -102,11 +102,15 @@ weight(agent) = base
 // 各系数说明
 base = 1.0（均等起点）
 
-beliefModifier:
-  Honesty    → safetyInLove.strength / 100
-  Security   → (100 - safetyInLove.strength) / 100
+beliefModifier（一律用当前场景 `beliefId` 在 `persona.beliefs` 中的 `strength`，记为 `focal/100`；无 beliefId 时用 0.75）:
+  Honesty    → focal / 100
+  Security   → (100 - focal) / 100
   Social     → 1.0（不绑定单一信念，绑定 history）
-  Attachment → 1.0（绑定 history）
+  Attachment → 1.0 × sceneAttachmentFactor（见下）
+
+sceneAttachmentFactor:
+  当 `contextTags` 含 **`intimate-relationship`**（与现有 intimate 场景一致）→ 1.0
+  否则 → 0.65（依恋声仍存在但偏弱，避免非亲密场景里过度「护关系」）
 
 historyModifier:
   Honesty    → max(0.3, 1.0 - justificationUses * 0.15)
@@ -191,6 +195,8 @@ Rules:
 
 ## 4) 辩论模式（可选，Round 2）
 
+**v1 默认：关闭。** 实现时可留特性开关，默认不请求第二轮 LLM。
+
 如果产品选择展示「辩论感」，可以在 Scenario 屏增加一轮「反驳」：
 
 ```
@@ -255,15 +261,21 @@ innerVoiceHistory: {
 
 ---
 
-## 8) 开放问题（产品决策层）
+## 8) 产品决策（v1 已定稿）
 
-| 问题 | 选项 A | 选项 B |
-|------|--------|--------|
-| **API key 在哪？** | 玩家输入（课程演示可行） | 后端代理（生产建议） |
-| **辩论轮次默认开？** | 开：体验更丰富但更长 | 关：v1 保守 |
-| **声音权重对玩家可见？** | 可见（透明教学）| 隐藏（更沉浸）|
-| **亲密关系场景外的 Agent 人格？** | 统一 4 个 Agent | 每个场景可自定义 voiceRoles |
-| **声音说中文还是英文？** | 跟随游戏语言（英文） | 产品化时支持 i18n |
+| 问题 | v1 决策 |
+|------|--------|
+| **API key** | **仅后端代理**（Netlify Function + `OPENAI_API_KEY`），前端不持有 key。 |
+| **Round 2 辩论** | **默认关闭**；仅 Round 1 四条声音。 |
+| **权重是否展示** | **隐藏**；UI 只显示台词（可选极轻的标签如 Honesty，不显示数值）。 |
+| **非亲密场景的 Agent** | **统一四个 Agent**；Attachment 用 §2b `sceneAttachmentFactor` 弱化。 |
+| **语言** | **英文**（与当前游戏一致）；i18n 后续产品化再做。 |
+
+### 8b) 实现落地（工程）
+
+- **端点：** `POST /api/inner-voices`（Netlify Function `netlify/functions/inner-voices.js`）。
+- **环境变量：** `OPENAI_API_KEY`（必填）；可选 `OPENAI_MODEL`（默认 `gpt-4o-mini`）。
+- **前端：** [`game/voiceContextBuilder.js`](../game/voiceContextBuilder.js)、[`game/voiceAgentOrchestrator.js`](../game/voiceAgentOrchestrator.js)、[`ui/gameUI.js`](../ui/gameUI.js) 场景屏异步拉取；无 key / 超时 / `file://` → 静态 `innerVoices`。
 
 ---
 

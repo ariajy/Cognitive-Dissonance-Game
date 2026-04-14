@@ -893,6 +893,63 @@ class GameUI {
     });
   }
 
+  buildStaticInnerVoiceLines(moment) {
+    const ids = ["honesty", "security", "social", "attachment"];
+    const lines = Array.isArray(moment && moment.innerVoices) ? moment.innerVoices : [];
+    return ids.map((id, idx) => ({
+      id: id,
+      text: typeof lines[idx] === "string" ? lines[idx] : "",
+      tone: ""
+    }));
+  }
+
+  fillInnerVoicesPanel(lines) {
+    if (!this.scenarioInnerVoicesEl) return;
+    const labels = {
+      honesty: "Honesty",
+      security: "Security",
+      social: "Social",
+      attachment: "Attachment"
+    };
+    this.scenarioInnerVoicesEl.innerHTML = "";
+    (lines || []).forEach((item) => {
+      if (!item || !item.text) return;
+      const div = document.createElement("div");
+      div.className = "inner-voice";
+      const tag = document.createElement("span");
+      tag.className = "inner-voice-tag";
+      tag.textContent = (labels[item.id] || item.id) + " · ";
+      const body = document.createElement("span");
+      body.className = "inner-voice-text";
+      body.textContent = item.text;
+      div.appendChild(tag);
+      div.appendChild(body);
+      this.scenarioInnerVoicesEl.appendChild(div);
+    });
+  }
+
+  tryRefreshInnerVoicesLLM(moment) {
+    if (!window.VoiceAgentOrchestrator || typeof window.VoiceAgentOrchestrator.generate !== "function") {
+      return Promise.resolve();
+    }
+    const momentId = moment && moment.id ? String(moment.id) : "";
+    const strain = this.strainSystem.getStrain();
+    const self = this;
+    return window.VoiceAgentOrchestrator.generate({
+      moment: moment,
+      persona: this.persona,
+      strain: strain,
+      gameLoop: this.loop
+    }).then((result) => {
+      const cur = self.loop.getCurrentDecisionMoment();
+      if (!cur || String(cur.id) !== momentId || !self.scenarioInnerVoicesEl) return;
+      if (result && result.source === "llm" && Array.isArray(result.lines)) {
+        const withText = result.lines.filter((x) => x && x.text);
+        if (withText.length) self.fillInnerVoicesPanel(withText);
+      }
+    });
+  }
+
   showScenario() {
     const moment = this.loop.getCurrentDecisionMoment();
     if (!moment) {
@@ -921,13 +978,9 @@ class GameUI {
     this.scenarioTextEl.textContent = moment.situation || "";
 
     if (this.scenarioInnerVoicesEl) {
-      this.scenarioInnerVoicesEl.innerHTML = "";
-      (moment.innerVoices || []).forEach((line) => {
-        const div = document.createElement("div");
-        div.className = "inner-voice";
-        div.textContent = line;
-        this.scenarioInnerVoicesEl.appendChild(div);
-      });
+      const staticLines = this.buildStaticInnerVoiceLines(moment);
+      this.fillInnerVoicesPanel(staticLines);
+      void this.tryRefreshInnerVoicesLLM(moment);
     }
 
     if (this.scenarioDecisionMomentEl) {

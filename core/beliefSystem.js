@@ -23,6 +23,23 @@ function createDefaultPersona() {
     playerPriorityBeliefIds: [],
     // Cross-session habit counter (justification path); see game/persistence.js
     justificationUses: 0,
+    // Previous episode labels for inner-voice LLM context (session; not required in save).
+    voiceContextCarryover: {
+      primaryLabel: "",
+      reductionType: null
+    },
+    // Cross-scene counters for inner voice weights; see docs/inner-voice-agent-system.md §5
+    innerVoiceHistory: {
+      consecutiveJustifications: 0,
+      beliefChanges: 0,
+      behaviorChanges: 0,
+      lastSceneVoiceWeights: {
+        honesty: 1,
+        security: 1,
+        social: 1,
+        attachment: 1
+      }
+    },
     beliefs: [
       {
         id: "responsibility",
